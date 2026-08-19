@@ -41,9 +41,26 @@ services:
       WORDPRESS_DB_USER: ${WORDPRESS_DB_USER:-dphi_wp}
       WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
       WORDPRESS_TABLE_PREFIX: ${WORDPRESS_TABLE_PREFIX:-dphi_}
+      WORDPRESS_DEBUG: ${WORDPRESS_DEBUG:-false}
       WORDPRESS_CONFIG_EXTRA: |
         define('WP_HOME', '${WP_HOME}');
         define('WP_SITEURL', '${WP_SITEURL}');
+
+        // Multisite sous-domaines (ticket WP-0 #3)
+        define('WP_ALLOW_MULTISITE', true);
+        define('MULTISITE', true);
+        define('SUBDOMAIN_INSTALL', true);
+        define('DOMAIN_CURRENT_SITE', '${WP_DOMAIN_CURRENT_SITE}');
+        define('PATH_CURRENT_SITE', '/');
+        define('SITE_ID_CURRENT_SITE', 1);
+        define('BLOG_ID_CURRENT_SITE', 1);
+
+        // Securite
+        define('DISALLOW_FILE_EDIT', ${WP_DISALLOW_FILE_EDIT:-true});
+
+        // Cache objet Redis (plugin Redis Object Cache requis, ticket WP-2 #16)
+        define('WP_REDIS_HOST', 'redis');
+        define('WP_REDIS_PORT', 6379);
     volumes:
       - wordpress_core:/var/www/html
       - wordpress_uploads:/var/www/html/wp-content/uploads
