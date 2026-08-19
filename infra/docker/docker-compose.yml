@@ -1,0 +1,122 @@
+name: dphi-wordpress
+
+services:
+  mariadb:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-dphi_wordpress}
+      MARIADB_USER: ${MARIADB_USER:-dphi_wp}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # wordpress:*-fpm only speaks FastCGI, so it can't be routed by Traefik
+  # directly -- the `nginx` service below terminates HTTP, serves static
+  # files, and proxies *.php to wordpress:9000. Same role nginx plays in
+  # front of `backend` in dphi-tv.
+  wordpress:
+    image: wordpress:6-php8.2-fpm
+    restart: unless-stopped
+    environment:
+      WORDPRESS_DB_HOST: mariadb
+      WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME:-dphi_wordpress}
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER:-dphi_wp}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+      WORDPRESS_TABLE_PREFIX: ${WORDPRESS_TABLE_PREFIX:-dphi_}
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_HOME', '${WP_HOME}');
+        define('WP_SITEURL', '${WP_SITEURL}');
+    volumes:
+      - wordpress_core:/var/www/html
+      - wordpress_uploads:/var/www/html/wp-content/uploads
+      - ../../wp-content/themes:/var/www/html/wp-content/themes
+      - ../../wp-content/plugins:/var/www/html/wp-content/plugins
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/9000'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    volumes:
+      - ./nginx/wordpress.conf:/etc/nginx/conf.d/default.conf:ro
+      - wordpress_core:/var/www/html:ro
+      - wordpress_uploads:/var/www/html/wp-content/uploads:ro
+      - ../../wp-content/themes:/var/www/html/wp-content/themes:ro
+      - ../../wp-content/plugins:/var/www/html/wp-content/plugins:ro
+    expose:
+      - "80"
+    networks:
+      - default
+      - dphi_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=dphi_network"
+      - "traefik.http.routers.wordpress.rule=Host(`dphi.africa`) || Host(`tv.dphi.africa`) || Host(`agro.dphi.africa`) || Host(`edu.dphi.africa`) || Host(`pay.dphi.africa`) || Host(`media.dphi.africa`)"
+      - "traefik.http.routers.wordpress.entrypoints=websecure"
+      - "traefik.http.routers.wordpress.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.wordpress.service=wordpress"
+      - "traefik.http.services.wordpress.loadbalancer.server.port=80"
+    depends_on:
+      wordpress:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # One-shot WP-CLI runner for bootstrap/maintenance scripts (ticket #5).
+  # Not started by `up -d` (profile-gated) -- invoke with:
+  #   docker compose --profile cli run --rm wpcli wp <command>
+  wpcli:
+    image: wordpress:cli
+    profiles: ["cli"]
+    volumes:
+      - wordpress_core:/var/www/html
+      - wordpress_uploads:/var/www/html/wp-content/uploads
+      - ../../wp-content/themes:/var/www/html/wp-content/themes
+      - ../../wp-content/plugins:/var/www/html/wp-content/plugins
+    environment:
+      WORDPRESS_DB_HOST: mariadb
+      WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME:-dphi_wordpress}
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER:-dphi_wp}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+volumes:
+  mariadb_data:
+  redis_data:
+  wordpress_core:
+  wordpress_uploads:
+
+networks:
+  dphi_network:
+    external: true

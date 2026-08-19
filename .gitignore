@@ -2,8 +2,6 @@
 # WordPress — secrets et fichiers générés par environnement
 # ─────────────────────────────────────────────
 wp-config.php
-wp-content/uploads/*
-!wp-content/uploads/.gitkeep
 wp-content/cache/
 wp-content/upgrade/
 *.sql
