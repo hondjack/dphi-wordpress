@@ -182,3 +182,65 @@ Ces règles évitent qu'un rendu DPhi soit perçu comme généré par une IA.
 - Repo dphi-pay (paiement) : https://github.com/hondjack/dphi-pay
 - Charte graphique complète : `docs/charte-graphique.md`
 - Hetzner CPX12 qual : 178.105.179.129
+
+---
+
+## Format de rapport obligatoire — fin de chaque session CC
+
+À la fin de chaque session, produis un rapport structuré selon ce format exact.
+Ce rapport est destiné à Claude.ai (coordination backlog) qui l'analysera
+et préparera le prompt de la session suivante.
+
+---
+
+### RAPPORT DPHI-WORDPRESS — TICKETS #X à #Y
+Repo hondjack/dphi-wordpress — {date} — Session Claude Code
+Pour avis : Claude.ai (coordination backlog)
+
+#### RÉSUMÉ
+{2-3 lignes max : ce qui a été livré, ce qui n'a pas été fait, anomalie notable}
+
+---
+
+#### #{NUM} — {TITRE DU TICKET} — {STATUT : LIVRÉ / DÉVIATION / BLOQUÉ / PLANIFIÉ}
+
+**Livré :**
+{liste de ce qui a été créé ou modifié — fichiers, migrations, endpoints}
+
+**Déviation (si applicable) :**
+{description de la déviation + justification technique}
+{indiquer si réversible et comment}
+
+**Non testé (si applicable) :**
+{ce qui n'a pas pu être validé — pourquoi — condition de test}
+
+**Remarque (si applicable) :**
+{observation utile pour la session suivante ou pour Claude.ai}
+
+---
+
+{répéter le bloc ci-dessus pour chaque ticket traité}
+
+---
+
+#### QUESTION POUR CLAUDE.AI (si applicable)
+{question précise nécessitant un arbitrage avant la prochaine session}
+{formuler clairement les options + la recommandation de CC}
+
+---
+
+#### PROCHAINE SESSION SUGGÉRÉE
+Tickets prêts : #{NUM}, #{NUM}
+Prérequis à valider manuellement avant : {liste ou "aucun"}
+
+---
+
+### Règles de rédaction du rapport
+
+- **Ticket non commencé** → une ligne : "#{NUM} — Non traité — hors scope session"
+- **Déviation mineure** → documenter même si justifiée — Claude.ai décide si on rouvre
+- **Déviation bloquante** → STOPPER et poser la question à Claude.ai avant de continuer
+- **Questions techniques** → formuler les options + ta recommandation — pas juste "que faire ?"
+- **Jamais de code inline** dans le rapport — décrire le comportement, pas l'implémentation
+- **Longueur** : concis — 1 écran par ticket max
+- **Langue** : français
