@@ -1,0 +1,49 @@
+# ─────────────────────────────────────────────
+# WordPress — secrets et fichiers générés par environnement
+# ─────────────────────────────────────────────
+wp-config.php
+wp-content/uploads/*
+!wp-content/uploads/.gitkeep
+wp-content/cache/
+wp-content/upgrade/
+*.sql
+*.sql.gz
+
+# ─────────────────────────────────────────────
+# Environment variables
+# ─────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ─────────────────────────────────────────────
+# Node.js (build tooling thèmes/plugins)
+# ─────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+dist/
+build/
+.eslintcache
+
+# ─────────────────────────────────────────────
+# Docker / logs
+# ─────────────────────────────────────────────
+*.log
+.docker/
+
+# ─────────────────────────────────────────────
+# OS / Editor
+# ─────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# ─────────────────────────────────────────────
+# Claude Code — overrides personnels/locaux uniquement
+# ─────────────────────────────────────────────
+.claude/settings.local.json
