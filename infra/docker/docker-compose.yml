@@ -110,7 +110,7 @@ services:
 
   # One-shot WP-CLI runner for bootstrap/maintenance scripts (ticket #5).
   # Not started by `up -d` (profile-gated) -- invoke with:
-  #   docker compose --profile cli run --rm wpcli wp <command>
+  #   docker compose --profile cli run --rm wpcli bash scripts/bootstrap.sh
   wpcli:
     image: wordpress:cli
     profiles: ["cli"]
@@ -119,11 +119,15 @@ services:
       - wordpress_uploads:/var/www/html/wp-content/uploads
       - ../../wp-content/themes:/var/www/html/wp-content/themes
       - ../../wp-content/plugins:/var/www/html/wp-content/plugins
+      - ../../scripts:/var/www/html/scripts
     environment:
       WORDPRESS_DB_HOST: mariadb
       WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME:-dphi_wordpress}
       WORDPRESS_DB_USER: ${WORDPRESS_DB_USER:-dphi_wp}
       WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+      WP_HOME: ${WP_HOME}
+      WP_DOMAIN_CURRENT_SITE: ${WP_DOMAIN_CURRENT_SITE}
+      WP_ADMIN_PASSWORD: ${WP_ADMIN_PASSWORD}
     depends_on:
       mariadb:
         condition: service_healthy
