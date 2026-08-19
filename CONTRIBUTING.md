@@ -41,3 +41,19 @@ Après ça, `wp-config.php` et les tables sont générés au premier `docker com
 cd infra/docker
 docker compose --profile cli run --rm wpcli bash scripts/bootstrap.sh
 ```
+
+## Backup quotidien
+
+`scripts/backup.sh` dump MariaDB + `wp-content/uploads/` (volume Docker) et pousse une archive vers Google Drive via `rclone`. Prérequis unique sur le serveur, avant le premier cron :
+
+```bash
+rclone config  # créer un remote nommé "gdrive" pointant sur le Google Drive DPhi
+```
+
+Cron (`crontab -e`, utilisateur `dphi`) :
+
+```
+0 3 * * * /opt/dphi-wordpress/scripts/backup.sh >> $HOME/dphi-wp-backup.log 2>&1
+```
+
+Rotation locale automatique : les archives de plus de 7 jours dans `/tmp` sont supprimées à chaque exécution.
