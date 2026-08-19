@@ -1,0 +1,32 @@
+name: Deploy Prod
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Désactivé tant que le VPS prod n'est pas provisionné (ticket WP-0) —
+    # ce job ne fait rien tant que PROD_SSH_HOST n'est pas défini en secret.
+    if: ${{ vars.PROD_ENABLED == 'true' }}
+    steps:
+      - name: Deploy to prod
+        env:
+          SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
+          SSH_USER: ${{ secrets.PROD_SSH_USER }}
+          SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" >> ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts
+          ssh $SSH_USER@$SSH_HOST << 'ENDSSH'
+            cd /opt/dphi-wordpress
+            git pull origin main
+            cd infra/docker
+            docker compose pull wordpress
+            docker compose up -d --build
+            docker compose --profile cli run --rm wpcli wp cache flush
+          ENDSSH
